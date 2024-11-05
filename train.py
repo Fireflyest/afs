@@ -140,11 +140,11 @@ if __name__ == '__main__':
     plt.plot(train_acc_y, label="train_acc")
     plt.plot(val_acc_y, label="val_acc", linestyle=':')
     plt.legend(loc='lower right')
-    plt.savefig('acc.png')
+    plt.savefig('./out/acc.png')
 
     
 
     plt.plot(train_loss_y, label="train_loss")
     plt.plot(val_loss_y, label="val_loss", linestyle=':')
     plt.legend(loc='lower right')
-    plt.savefig('loss.png')
+    plt.savefig('./out/loss.png')

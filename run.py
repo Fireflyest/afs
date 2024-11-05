@@ -33,7 +33,7 @@ def test_model(model, dataloader, batch_size):
             plt.ylim([0.0, 1.0])  # 限定y轴的范围
             plt.legend(loc='lower right')
             plt.grid()
-            plt.savefig('./auc.png')
+            plt.savefig('./out/auc.png')
 
 
 if __name__ == '__main__':
