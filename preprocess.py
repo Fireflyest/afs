@@ -9,11 +9,13 @@ import ecgreader
 
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import BayesianRidge
 from sklearn.preprocessing import QuantileTransformer, MaxAbsScaler, MinMaxScaler, StandardScaler, normalize
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 
+# 心电数据用不同颜色画，部位接近的颜色比较接近
 HEADS = {
     'I' : 'red', 
     'II' : 'crimson', 
@@ -29,7 +31,7 @@ HEADS = {
     'V6' : 'darkblue'
 }
 
-
+# 读取特征对应的名称及其类型
 def read_dictionary_data():
     dictionary_io = r'./dataset/Data_Dictionary.xlsx'
     # 数据字典
@@ -41,6 +43,7 @@ def read_dictionary_data():
     value_types['f.4080.0.0'] = 'Integer'
     return field_names, value_types
 
+# 读取所有数据
 def read_data(path):
     baseline_io = f'.{path}/Baseline_characteristics.xlsx'
     life_style_io = f'.{path}/life_style.xlsx'
@@ -56,24 +59,32 @@ def read_data(path):
     ground_true_data = pd.read_excel(io=ground_true_io) # (3200, 4) 
     # print(ground_true_data.shape)
 
-    # nmr_data.fillna(nmr_data.mean(), inplace=True)
-    nmr_data.fillna(0, inplace=True)
+    # TODO 血液数据的缺失比较特殊，一般是某个人的一整行数据全空
+    nmr_data.fillna(nmr_data.mean(), inplace=True)
+    # nmr_data.fillna(0, inplace=True)
+
     # 数据合并
     return pd.merge(baseline_data, life_style_data), nmr_data, ground_true_data
 
-def drop_nan_column(data : pd.DataFrame, thresh=0.2):
+# 如果某个特征的缺失比例超过阈值，就把该列特征去掉
+def drop_nan_column(data : pd.DataFrame, thresh=0.0):
     # 剔除缺失大于阈值的列
     # print(data.shape)
     data = data.dropna(axis=1, thresh=data.shape[0] * (1 - thresh)) # (3200, 75) -> (3200, 49)
     # print(f'data.shape={data.shape}')
     return data
 
+# 填充缺失值
 def fill_nan_data(data : pd.DataFrame):
     # https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html#sklearn.impute.IterativeImputer
     imp = IterativeImputer(estimator=BayesianRidge(), n_nearest_features=None, imputation_order='ascending')
     data = imp.fit_transform(data)
+
+    # imp = SimpleImputer(missing_values=np.nan, strategy='mean')
+    # data = imp.fit_transform(data)
     return data
 
+# 正则化
 def normalize_data(data):
     # standard_scaler = StandardScaler()
     # data = standard_scaler.fit_transform(data)
@@ -83,17 +94,21 @@ def normalize_data(data):
     # quantile_transformer = QuantileTransformer(output_distribution='normal', random_state=0)
     # data = quantile_transformer.fit_transform(data)
 
-    min_max_scaler = MinMaxScaler()
-    data = min_max_scaler.fit_transform(data)
+    # 把数据缩放在0~1
+    # min_max_scaler = MinMaxScaler()
+    # data = min_max_scaler.fit_transform(data)
 
+    # 数据正态分布在y轴附近
     # https://scikit-learn.org/stable/modules/preprocessing.html#scaling-features-to-a-range
-    # max_abs_scaler = MaxAbsScaler()
-    # data = max_abs_scaler.fit_transform(data)
+    max_abs_scaler = MaxAbsScaler()
+    data = max_abs_scaler.fit_transform(data)
 
+    # l2正则化
     # https://scikit-learn.org/stable/modules/preprocessing.html#normalization
     # data = normalize(data, norm='l2')
     return data
 
+# 加载数据
 def load_data(path):
     field_names, value_types = read_dictionary_data()
     base_data, nmr_data, ground_true_data = read_data(path)
@@ -122,20 +137,25 @@ def load_data(path):
     # total_data = nmr_data
     total_data = pd.concat([processed_base_data, processed_nmr_data], axis=1)
 
+    # 临时保存
     temp_io = f'.{path}/Temp.csv'
     total_data.to_csv(temp_io)
 
+    # eid， 特征名称， 基础数据和血液数据， ground_true
     return eid, total_data.columns, total_data, ground_true_data
 
+# 从xml文件中读取心电数据
 def read_ecg(path):
     reader = ecgreader.CardioSoftECGXMLReader(path) #Create a CardioSoftECGXMLreader class
     return reader.LeadVoltages # Extract voltages as an array of size (samplesize, 12)
 
+# 小波分析，把曲线变平滑
 def coeffs_ecg(data):
     coeffs = pywt.wavedec(data, 'db8')
     coeffs_thresh = map(lambda x: pywt.threshold(x, 50, mode='hard'), coeffs)
     return pywt.waverec(list(coeffs_thresh), 'db8')
 
+# 把心电数据转化为图片
 def convert_ecg(path, eid):
     os.makedirs(f'.{path}/ecg_temp', exist_ok=True)
     save_path = f'.{path}/ecg_temp/{eid}.png'
@@ -163,6 +183,7 @@ def convert_ecg(path, eid):
         plt.savefig(save_path)
     return save_path
 
+# 转化所有心电数据，测试用的方法
 def convert_all_ecg(path):
     ecg_dir = f'.{path}/ecg'
     os.makedirs(f'.{path}/ecg_temp', exist_ok=True)
@@ -190,35 +211,41 @@ def convert_all_ecg(path):
         # if index == 10 : break
 
 if __name__ == '__main__':
+
+
     # convert_all_ecg('/dataset/train')
 
-    # eid, column, total_data, ground_true_data = load_data('/dataset/train')
+
+
+
+    # 以下代码是对特征的重要性进行排序
+    eid, column, total_data, ground_true_data = load_data('/dataset/train')
     
-    # X_train, X_val, y_train, y_val = train_test_split(total_data, ground_true_data.Complication, test_size=0.2, random_state=42)
+    X_train, X_val, y_train, y_val = train_test_split(total_data, ground_true_data.T2D, test_size=0.2, random_state=42)
 
-    # # https://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html#feature-importance-based-on-feature-permutation
-    # feature_names = column.to_list()
-    # forest = RandomForestClassifier(random_state=0)
-    # forest.fit(X_train, y_train)
+    # https://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html#feature-importance-based-on-feature-permutation
+    feature_names = column.to_list()
+    forest = RandomForestClassifier(random_state=0)
+    forest.fit(X_train, y_train)
 
-    # start_time = time.time()
-    # importances = forest.feature_importances_
-    # std = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)
-    # elapsed_time = time.time() - start_time
+    start_time = time.time()
+    importances = forest.feature_importances_
+    std = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)
+    elapsed_time = time.time() - start_time
 
-    # print(f"Elapsed time to compute the importances: {elapsed_time:.3f} seconds")
+    print(f"Elapsed time to compute the importances: {elapsed_time:.3f} seconds")
 
-    # forest_importances = pd.Series(importances, index=feature_names)
-    # forest_importances = forest_importances.sort_values(ascending=False)[0:48]
-    # print(forest_importances)
+    forest_importances = pd.Series(importances, index=feature_names)
+    forest_importances = forest_importances.sort_values(ascending=False)[0:64]
+    print(forest_importances)
 
-    # fig, ax = plt.subplots()
-    # forest_importances.plot.barh(ax=ax)
-    # ax.set_title("Feature importances using MDI")
-    # ax.set_ylabel("Mean decrease in impurity")
-    # fig.tight_layout()
-    # plt.savefig('feature_importances.png')
+    fig, ax = plt.subplots()
+    forest_importances.plot.barh(ax=ax)
+    ax.set_title("Feature importances using MDI")
+    ax.set_ylabel("Mean decrease in impurity")
+    fig.tight_layout()
+    plt.savefig('./out/feature_importances.png')
 
-    # print(forest_importances.keys())
+    print(forest_importances.keys())
 
     pass

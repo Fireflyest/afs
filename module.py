@@ -11,75 +11,87 @@ from torch.utils.data import Dataset
 
 
 # 基础前48
-TOP_BASE_COLUMNS = ['Body mass index (BMI)', 'f.4080.0.0',
-    'Diastolic blood pressure, automated reading', 'Age at recruitment',
-    'Oily fish intake', 'Year of birth', 'Duration of walks',
-    'Frequency of stair climbing in last 4 weeks',
-    'Age started smoking in former smokers',
-    'Time from waking to first cigarette', 'Snoring',
-    'Englyst dietary fibre',
-    'Light smokers, at least 100 smokes in lifetime',
-    'Average weekly spirits intake',
-    'Number of cigarettes previously smoked daily',
+TOP_BASE_COLUMNS = ['Body mass index (BMI)', 'Age at recruitment', 'f.4080.0.0',
+    'Year of birth', 'Diastolic blood pressure, automated reading',
+    'Oily fish intake', 'Age started smoking in former smokers',
+    'Frequency of stair climbing in last 4 weeks', 'Duration of walks',
+    'Time from waking to first cigarette', 'Average weekly spirits intake',
+    'Usual walking pace', 'Alcohol intake versus 10 years previously',
     'Frequency of solarium/sunlamp use', 'Variation in diet',
-    'Usual walking pace', 'Cheese intake',
-    'Alcohol intake versus 10 years previously', 'Getting up in morning',
-    'Magnesium', 'Time spent outdoors in winter', 'Salt added to food',
-    'Ever smoked', 'Exposure to tobacco smoke outside home',
-    'Poultry intake', 'Cereal intake', 'Processed meat intake', 'Vitamin E',
-    'Sleep duration', 'Time spend outdoors in summer',
-    'Weekly usage of mobile phone in last 3 months',
-    'Sleeplessness / insomnia',
+    'Getting up in morning',
+    'Light smokers, at least 100 smokes in lifetime',
+    'Number of cigarettes previously smoked daily', 'Snoring',
+    'Cheese intake', 'Magnesium', 'Time spent outdoors in winter',
+    'Sleeplessness / insomnia', 'Time spend outdoors in summer',
+    'Weekly usage of mobile phone in last 3 months', 'Cereal intake',
+    'Ever smoked', 'Englyst dietary fibre', 'Salt added to food',
     'Frequency of walking for pleasure in last 4 weeks',
-    'Alcohol intake frequency.', 'Age first had sexual intercourse',
-    'Drive faster than motorway speed limit', 'Former alcohol drinker',
-    'Length of mobile phone use', 'Sex',
-    'Ever stopped smoking for 6+ months', 'Able to confide',
+    'Processed meat intake', 'Exposure to tobacco smoke outside home',
+    'Alcohol intake frequency.', 'Poultry intake', 'Sex',
+    'Age first had sexual intercourse', 'Length of mobile phone use',
+    'Ever stopped smoking for 6+ months', 'Vitamin E', 'Sleep duration',
+    'Able to confide', 'Exposure to tobacco smoke at home',
     'Number of unsuccessful stop-smoking attempts',
-    'Exposure to tobacco smoke at home', 'Calcium',
-    'Number of diet questionnaires completed', 'Beef intake']
+    'Former alcohol drinker', 'Number of diet questionnaires completed',
+    'Drive faster than motorway speed limit', 'Calcium', 'Beef intake']
 
 # 血液前48
 TOP_NMR_COLUMNS = ['Glucose',
-    'Phospholipids to Total Lipids in Very Small VLDL percentage',
-    'Tyrosine', 'Pyruvate',
-    'Triglycerides to Total Lipids in IDL percentage',
-    'Monounsaturated Fatty Acids to Total Fatty Acids percentage',
-    'Acetoacetate', 'Alanine', 'Acetone', 'Histidine', 'Glycine',
-    '3-Hydroxybutyrate',
-    'Phospholipids to Total Lipids in Large HDL percentage', 'Acetate',
-    'Triglycerides to Total Lipids in Very Large VLDL percentage',
-    'Free Cholesterol to Total Lipids in IDL percentage',
-    'Cholesterol to Total Lipids in Chylomicrons and Extremely Large VLDL percentage',
-    'Cholesteryl Esters to Total Lipids in Chylomicrons and Extremely Large VLDL percentage',
-    'Cholesteryl Esters to Total Lipids in IDL percentage', 'Creatinine',
-    'Triglycerides to Total Lipids in Medium VLDL percentage',
-    'Triglycerides to Total Lipids in Large LDL percentage',
-    'Total Concentration of Branched-Chain Amino Acids (Leucine + Isoleucine + Valine)',
-    'Free Cholesterol in IDL',
-    'Phospholipids to Total Lipids in IDL percentage',
-    'Phospholipids to Total Lipids in Small LDL percentage',
-    'Phospholipids to Total Lipids in Medium HDL percentage',
-    'Phospholipids in Small HDL', 'Albumin',
-    'Triglycerides to Total Lipids in Medium LDL percentage',
-    'Concentration of Small HDL Particles', 'Free Cholesterol in Large LDL',
-    'Omega-3 Fatty Acids to Total Fatty Acids percentage',
+    'Cholesteryl Esters to Total Lipids in Very Small VLDL percentage',
+    'Cholesterol to Total Lipids in Very Small VLDL percentage',
+    'Phospholipids to Total Lipids in Large HDL percentage',
+    'Free Cholesterol in IDL', 'Cholesteryl Esters in IDL',
+    'Cholesterol to Total Lipids in Medium VLDL percentage',
+    'Cholesterol to Total Lipids in Large HDL percentage',
     'Triglycerides to Total Lipids in Small VLDL percentage',
-    'Triglycerides in Medium HDL', 'Valine', 'Glutamine', 'Phenylalanine',
-    'Total Lipids in Large VLDL',
-    'Total Lipids in Chylomicrons and Extremely Large VLDL', 'Citrate',
-    'Concentration of Medium HDL Particles',
-    'Phospholipids to Total Lipids in Chylomicrons and Extremely Large VLDL percentage',
-    'Isoleucine', 'Lactate',
+    'Cholesteryl Esters to Total Lipids in Medium VLDL percentage',
+    'Phospholipids to Total Lipids in Medium VLDL percentage',
+    'Cholesterol in IDL',
+    'Triglycerides to Total Lipids in Very Large VLDL percentage',
+    'Cholesteryl Esters to Total Lipids in Large HDL percentage',
+    'Phospholipids to Total Lipids in Small VLDL percentage',
+    'Cholesteryl Esters to Total Lipids in IDL percentage',
+    '3-Hydroxybutyrate',
+    'Free Cholesterol to Total Lipids in Medium VLDL percentage',
+    'Free Cholesterol to Total Lipids in Small VLDL percentage',
+    'Triglycerides to Total Lipids in Medium VLDL percentage',
+    'Cholesterol to Total Lipids in IDL percentage',
+    'Cholesterol to Total Lipids in Small VLDL percentage',
+    'Cholesteryl Esters in Very Small VLDL',
+    'Free Cholesterol to Total Lipids in Large LDL percentage',
+    'Glycoprotein Acetyls',
+    'Cholesterol to Total Lipids in Large LDL percentage', 'Tyrosine',
+    'Glutamine', 'Creatinine', 'Acetoacetate',
+    'Cholesteryl Esters to Total Lipids in Very Large VLDL percentage',
+    'Total Concentration of Branched-Chain Amino Acids (Leucine + Isoleucine + Valine)',
+    'Albumin', 'Alanine',
+    'Triglycerides to Total Lipids in Medium LDL percentage',
+    'Cholesteryl Esters in Medium VLDL', 'Citrate',
+    'Cholesteryl Esters to Total Lipids in Chylomicrons and Extremely Large VLDL percentage',
+    'Cholesteryl Esters to Total Lipids in Large VLDL percentage',
+    'Triglycerides to Total Lipids in IDL percentage',
+    'Cholesterol in Very Small VLDL',
+    'Triglycerides to Total Lipids in Small LDL percentage', 'Valine',
+    'Phospholipids in IDL', 'Pyruvate',
+    'Free Cholesterol to Total Lipids in Very Small VLDL percentage',
+    'Cholesteryl Esters in Very Large HDL',
     'Free Cholesterol to Total Lipids in Very Large HDL percentage',
-    'Leucine',
-    'Cholesteryl Esters to Total Lipids in Very Small VLDL percentage']
+    'Triglycerides to Total Lipids in Very Small VLDL percentage',
+    'Phospholipids to Total Lipids in Medium LDL percentage',
+    'Monounsaturated Fatty Acids to Total Fatty Acids percentage',
+    'Lactate', 'Acetone', 'Leucine', 'Concentration of Large HDL Particles',
+    'Phosphatidylcholines',
+    'Cholesteryl Esters to Total Lipids in Large LDL percentage',
+    'Triglycerides in Large HDL', 'Glycine', 'Total Lipids in IDL',
+    'Cholesterol to Total Lipids in Very Large VLDL percentage',
+    'Isoleucine', 'Omega-3 Fatty Acids to Total Fatty Acids percentage',
+    'Cholesterol in Large HDL']
 
 # 用来训练的基础特征
-USE_BASE_COLUMNS = TOP_BASE_COLUMNS[:32]
+USE_BASE_COLUMNS = TOP_BASE_COLUMNS[:64]
 
 # 用来训练的血液特征
-USE_NMR_COLUMNS = TOP_NMR_COLUMNS[:32]
+USE_NMR_COLUMNS = TOP_NMR_COLUMNS[:64]
 
 # 取多少个特征
 COLUMNS = len(USE_BASE_COLUMNS) + len(USE_NMR_COLUMNS)
@@ -91,13 +103,18 @@ class DiabetesDataset(Dataset):
         super().__init__()
         self.transform = transform
         
+        # 这里拼接是为了方便删除某些行
         self.data = pd.concat([data, ground_true], axis=1)
         # self.data.dropna(how='any', inplace=True, axis=0)
 
+        # 基础数据和血液数据
         self.ecgs = ecg_paths
         # self.X = torch.tensor(self.data[TOP_COLUMNS[:COLUMNS]].values, dtype=torch.float)
         self.X = torch.tensor(self.data[USE_BASE_COLUMNS + USE_NMR_COLUMNS].values, dtype=torch.float)
         print(f'self.X={self.X}')
+
+
+        # ground_true数据
         self.y = torch.tensor(self.data.T2D.values, dtype=torch.float) # 不要第一列的确诊时间
         # self.y = torch.tensor(self.data.Complication.values, dtype=torch.float) # 不要第一列的确诊时间
         # self.y = torch.tensor(self.data[['T2D','Complication']].values, dtype=torch.float) # 不要第一列的确诊时间
@@ -113,13 +130,13 @@ class DiabetesDataset(Dataset):
 
 
 
-
+# 残差，自注意力，全连接
 class ResidualFcBlock(nn.Module):
     def __init__(self, dim) -> None:
         super().__init__()            
         # self.fc1 = nn.Linear(dim, dim)
         self.fc1 = SelfAttention(dim, dim, dim)
-        self.dp = nn.Dropout(0.5)
+        self.dp = nn.Dropout(0.3)
         self.ac = nn.ReLU()
         self.fc2 = nn.Linear(dim, dim)
     
@@ -156,6 +173,7 @@ class SelfAttention(nn.Module):
         # attention系数和v相乘，获得最终的得分
         return torch.mm(dist, v)
 
+# 总体网络
 class DiabetesPredictNet(nn.Module):
     def __init__(self):
         super().__init__()

@@ -2,6 +2,9 @@ import xmltodict
 import numpy as np
 import matplotlib.pyplot as plt
 
+# 读取心电数据的文件
+# 目前只读取了心电图
+
 # Two types of XML in the LongQT Dataset:
 #   (1) XML containing 'StripData' dictionary, fs=500Hz.
 #   (2) XML containing 'FullDisclosure' dictionary, fs=100Hz.

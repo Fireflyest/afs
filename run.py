@@ -8,6 +8,11 @@ from torchvision import transforms
 import torch
 import time
 
+
+
+
+
+# 用测试集数据来得出结果
 def test_model(model, dataloader, batch_size):
     model.eval()
     with torch.no_grad():
@@ -61,10 +66,13 @@ if __name__ == '__main__':
     # 划分数据集
     dataset = module.DiabetesDataset(transform, total_data, ground_true_data, ecg_paths)
 
+    # 加载模型
     model = module.DiabetesPredictNet()
-    model.load_state_dict(torch.load('./best.pt', weights_only=True))
+    model.load_state_dict(torch.load('./out/best.pt', weights_only=True))
+    # model.load_state_dict(torch.load('./out/last.pt', weights_only=True))
     model.to(device)
 
+    # 取一半因为内存不够
     batch_size = int(len(dataset) / 2)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 

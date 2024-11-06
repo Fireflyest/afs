@@ -79,13 +79,13 @@ def train_model(model, dataloaders, dataset_sizes, loss_fc, optimizer, num_epoch
             # deep copy the model
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
-                torch.save(model.state_dict(), "./best.pt")
+                torch.save(model.state_dict(), "./out/best.pt")
 
     time_elapsed = time.time() - since
     print(f'Training complete in {time_elapsed // 60:.0f}m {time_elapsed % 60:.0f}s')
     print(f'Best val Acc: {best_acc:4f}')
 
-    torch.save(model.state_dict(), "./last.pt")
+    torch.save(model.state_dict(), "./out/last.pt")
     return model, train_loss_y, train_acc_y, val_loss_y, val_acc_y
 
 if __name__ == '__main__':
@@ -109,22 +109,27 @@ if __name__ == '__main__':
 
     # 心电图xml文件转化为图片并返回图片的路径
     ecg_paths = { index : preprocess.convert_ecg(path, eid) for index, eid in enumerate(eids.to_list()) }
+
     # 划分数据集
     train_dataset = module.DiabetesDataset(transform, total_data, ground_true_data, ecg_paths)
     train_data_size = int(0.8 * len(train_dataset))
     val_data_size = len(train_dataset) - train_data_size
     train_data, val_data = random_split(train_dataset, [train_data_size, val_data_size])
+
     # 数据加载器
     dataloaders = { 'train' : DataLoader(train_data, batch_size=8, shuffle=True), 'val' : DataLoader(val_data, batch_size=8, shuffle=False) }
     dataset_sizes = { 'train' : train_data_size, 'val' : val_data_size }
 
+    # 模型
     model = module.DiabetesPredictNet().to(device)
     model.apply(module.initialize_weights)
 
+    # 损失函数
     # criterion = nn.CrossEntropyLoss()
     criterion = nn.MSELoss()
     # criterion = nn.BCEWithLogitsLoss()
 
+    # 优化器
     # optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=0.001)
 
@@ -141,8 +146,6 @@ if __name__ == '__main__':
     plt.plot(val_acc_y, label="val_acc", linestyle=':')
     plt.legend(loc='lower right')
     plt.savefig('./out/acc.png')
-
-    
 
     plt.plot(train_loss_y, label="train_loss")
     plt.plot(val_loss_y, label="val_loss", linestyle=':')
