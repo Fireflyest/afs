@@ -67,7 +67,7 @@ def read_data(path):
     return pd.merge(baseline_data, life_style_data), nmr_data, ground_true_data
 
 # 如果某个特征的缺失比例超过阈值，就把该列特征去掉
-def drop_nan_column(data : pd.DataFrame, thresh=0.0):
+def drop_nan_column(data : pd.DataFrame, thresh=0.2):
     # 剔除缺失大于阈值的列
     # print(data.shape)
     data = data.dropna(axis=1, thresh=data.shape[0] * (1 - thresh)) # (3200, 75) -> (3200, 49)
@@ -77,15 +77,15 @@ def drop_nan_column(data : pd.DataFrame, thresh=0.0):
 # 填充缺失值
 def fill_nan_data(data : pd.DataFrame):
     # https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html#sklearn.impute.IterativeImputer
-    imp = IterativeImputer(estimator=BayesianRidge(), n_nearest_features=None, imputation_order='ascending')
-    data = imp.fit_transform(data)
-
-    # imp = SimpleImputer(missing_values=np.nan, strategy='mean')
+    # imp = IterativeImputer(estimator=BayesianRidge(), n_nearest_features=None, imputation_order='ascending')
     # data = imp.fit_transform(data)
+
+    imp = SimpleImputer(missing_values=np.nan, strategy='mean')
+    data = imp.fit_transform(data)
     return data
 
 # 正则化
-def normalize_data(data):
+def normalize_data(data : pd.DataFrame):
     # standard_scaler = StandardScaler()
     # data = standard_scaler.fit_transform(data)
 
@@ -98,14 +98,24 @@ def normalize_data(data):
     # min_max_scaler = MinMaxScaler()
     # data = min_max_scaler.fit_transform(data)
 
-    # 数据正态分布在y轴附近
+    # 把数据缩放在0~1
     # https://scikit-learn.org/stable/modules/preprocessing.html#scaling-features-to-a-range
-    max_abs_scaler = MaxAbsScaler()
-    data = max_abs_scaler.fit_transform(data)
+    # max_abs_scaler = MaxAbsScaler()
+    # data = max_abs_scaler.fit_transform(data)
 
     # l2正则化
     # https://scikit-learn.org/stable/modules/preprocessing.html#normalization
     # data = normalize(data, norm='l2')
+
+    data = data.astype(np.float64)
+    for column, value in data.items():
+        value = value.to_frame()
+
+        scaler = MinMaxScaler().fit(value)
+        # scaler = QuantileTransformer(output_distribution='normal', random_state=0).fit(value)
+
+        data.loc[:,column] = scaler.transform(value)
+
     return data
 
 # 加载数据
@@ -120,7 +130,7 @@ def load_data(path):
     # 基础数据
     base_data.rename(columns=field_names, inplace=True)
     base_data.drop('f.eid', axis=1, inplace=True)
-    processed_base_data = pd.DataFrame(normalize_data(fill_nan_data(drop_nan_column(base_data, thresh=0.2))))
+    processed_base_data = pd.DataFrame(fill_nan_data(normalize_data(drop_nan_column(base_data, thresh=0.8))))
     # processed_base_data = pd.DataFrame(fill_nan_data(drop_nan_column(base_data, thresh=0.2)))
     processed_base_data.rename(columns={ i : base_data.columns.to_list()[i] for i in range(0, len(base_data.columns)) }, inplace=True)
     # print(processed_base_data)

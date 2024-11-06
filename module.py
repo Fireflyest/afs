@@ -11,29 +11,37 @@ from torch.utils.data import Dataset
 
 
 # 基础前48
-TOP_BASE_COLUMNS = ['Body mass index (BMI)', 'Age at recruitment', 'f.4080.0.0',
-    'Year of birth', 'Diastolic blood pressure, automated reading',
-    'Oily fish intake', 'Age started smoking in former smokers',
-    'Frequency of stair climbing in last 4 weeks', 'Duration of walks',
-    'Time from waking to first cigarette', 'Average weekly spirits intake',
-    'Usual walking pace', 'Alcohol intake versus 10 years previously',
-    'Frequency of solarium/sunlamp use', 'Variation in diet',
-    'Getting up in morning',
-    'Light smokers, at least 100 smokes in lifetime',
-    'Number of cigarettes previously smoked daily', 'Snoring',
-    'Cheese intake', 'Magnesium', 'Time spent outdoors in winter',
-    'Sleeplessness / insomnia', 'Time spend outdoors in summer',
-    'Weekly usage of mobile phone in last 3 months', 'Cereal intake',
-    'Ever smoked', 'Englyst dietary fibre', 'Salt added to food',
-    'Frequency of walking for pleasure in last 4 weeks',
-    'Processed meat intake', 'Exposure to tobacco smoke outside home',
-    'Alcohol intake frequency.', 'Poultry intake', 'Sex',
-    'Age first had sexual intercourse', 'Length of mobile phone use',
-    'Ever stopped smoking for 6+ months', 'Vitamin E', 'Sleep duration',
-    'Able to confide', 'Exposure to tobacco smoke at home',
+TOP_BASE_COLUMNS = ['Body mass index (BMI)',
+    'Frequency of walking for pleasure in last 4 weeks', 'Cheese intake',
+    'Year of birth', 'Age at recruitment', 'f.4080.0.0',
+    'Current tobacco smoking', 'Fresh fruit intake', 'Poultry intake',
+    'Getting up in morning', 'Duration of vigorous activity',
+    'Diastolic blood pressure, automated reading', 'Sleep duration',
     'Number of unsuccessful stop-smoking attempts',
-    'Former alcohol drinker', 'Number of diet questionnaires completed',
-    'Drive faster than motorway speed limit', 'Calcium', 'Beef intake']
+    'Average weekly champagne plus white wine intake',
+    'Time spent outdoors in winter', 'Ever stopped smoking for 6+ months',
+    'Age started smoking in former smokers',
+    'Time spent watching television (TV)', 'Cereal intake',
+    'Past tobacco smoking', 'Age first had sexual intercourse', 'Calcium',
+    'Light smokers, at least 100 smokes in lifetime', 'Beef intake',
+    'Alcohol intake versus 10 years previously', 'Duration of walks',
+    'Usual walking pace', 'Able to confide',
+    'Time from waking to first cigarette', 'Former alcohol drinker',
+    'Hands-free device/speakerphone use with mobile phone in last 3 month',
+    'Vitamin E', 'Magnesium', 'Duration walking for pleasure',
+    'Frequency of stair climbing in last 4 weeks',
+    'Drive faster than motorway speed limit', 'Alcohol intake frequency.',
+    'Average weekly spirits intake', 'Plays computer games', 'Ever smoked',
+    'Processed meat intake', 'Salad / raw vegetable intake', 'Sex',
+    'Oily fish intake', 'Number of cigarettes previously smoked daily',
+    'Weekly usage of mobile phone in last 3 months',
+    'Sleeplessness / insomnia', 'Englyst dietary fibre',
+    'Exposure to tobacco smoke outside home',
+    'Number of diet questionnaires completed', 'Variation in diet',
+    'Time spend outdoors in summer', 'Salt added to food', 'Vitamin C',
+    'Snoring', 'Exposure to tobacco smoke at home', 'Iron',
+    'Frequency of solarium/sunlamp use', 'Length of mobile phone use',
+    'Nap during day']
 
 # 血液前48
 TOP_NMR_COLUMNS = ['Glucose',
@@ -88,10 +96,10 @@ TOP_NMR_COLUMNS = ['Glucose',
     'Cholesterol in Large HDL']
 
 # 用来训练的基础特征
-USE_BASE_COLUMNS = TOP_BASE_COLUMNS[:64]
+USE_BASE_COLUMNS = TOP_BASE_COLUMNS[:5]
 
 # 用来训练的血液特征
-USE_NMR_COLUMNS = TOP_NMR_COLUMNS[:64]
+USE_NMR_COLUMNS = TOP_NMR_COLUMNS[:5]
 
 # 取多少个特征
 COLUMNS = len(USE_BASE_COLUMNS) + len(USE_NMR_COLUMNS)
