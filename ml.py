@@ -55,8 +55,8 @@ def train_and_evaluate_model(model,X,y, verbose=False, n_splits=10):
             X_train, X_test = X.iloc[train_index], X.iloc[test_index]
         else:
             X_train, X_test = X[train_index], X[test_index]
-          
-        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+
+        y_train, y_test = y[train_index], y[test_index]
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
         
@@ -103,8 +103,10 @@ if __name__ == '__main__':
     # 数据读取，在module文件下设置取前几个特征
     train_dataset = module.DiabetesDataset(transform, total_data, ground_true_data, ecg_paths)
 
-    X = train_dataset.X
-    y = ground_true_data.T2D
+    # X = pd.DataFrame(train_dataset.X.numpy())
+    # y = pd.DataFrame(train_dataset.y.numpy())
+    X = total_data.values
+    y = ground_true_data.T2D.values
     # oversample = SMOTE(random_state=123)
     # X, y = oversample.fit_resample(X, y)   
 
@@ -113,15 +115,82 @@ if __name__ == '__main__':
 
 
 
+    # from collections import OrderedDict
+    # # NOTE: Setting the `warm_start` construction parameter to `True` disables
+    # # support for parallelized ensembles but is necessary for tracking the OOB
+    # # error trajectory during training.
+    # ensemble_clfs = [
+    #     (
+    #         "RandomForestClassifier, max_features='sqrt'",
+    #         RandomForestClassifier(
+    #             warm_start=True,
+    #             oob_score=True,
+    #             max_features="sqrt",
+    #             random_state=42,
+    #         ),
+    #     ),
+    #     (
+    #         "RandomForestClassifier, max_features='log2'",
+    #         RandomForestClassifier(
+    #             warm_start=True,
+    #             max_features="log2",
+    #             oob_score=True,
+    #             random_state=42,
+    #         ),
+    #     ),
+    #     (
+    #         "RandomForestClassifier, max_features=None",
+    #         RandomForestClassifier(
+    #             warm_start=True,
+    #             max_features=None,
+    #             oob_score=True,
+    #             random_state=42,
+    #         ),
+    #     ),
+    # ]
+
+    # # Map a classifier name to a list of (<n_estimators>, <error rate>) pairs.
+    # error_rate = OrderedDict((label, []) for label, _ in ensemble_clfs)
+
+    # # Range of `n_estimators` values to explore.
+    # min_estimators = 15
+    # max_estimators = 150
+
+    # for label, clf in ensemble_clfs:
+    #     for i in range(min_estimators, max_estimators + 1, 5):
+    #         clf.set_params(n_estimators=i)
+    #         clf.fit(X, y)
+
+    #         # Record the OOB error for each `n_estimators=i` setting.
+    #         oob_error = 1 - clf.oob_score_
+    #         error_rate[label].append((i, oob_error))
+
+    # # Generate the "OOB error rate" vs. "n_estimators" plot.
+    # for label, clf_err in error_rate.items():
+    #     xs, ys = zip(*clf_err)
+    #     plt.plot(xs, ys, label=label)
+
+    # plt.xlim(min_estimators, max_estimators)
+    # plt.xlabel("n_estimators")
+    # plt.ylabel("OOB error rate")
+    # plt.legend(loc="upper right")
+    # plt.savefig('./out/RandomForestClassifier.png')
+
+
+
+
+
     # Create tuned model for RF
     rf_tuned_nofs_nobl = RandomForestClassifier(max_depth = 5,  max_features = None, 
                             criterion = 'entropy', n_estimators = 100, random_state=123)
 
     # Train and evaluate the Random Forest Model
-    train_and_evaluate_model(rf_tuned_nofs_nobl, X_train, y_train, verbose=False)
+    train_and_evaluate_model(rf_tuned_nofs_nobl, X_train, y_train, verbose=True)
 
     # Do prediction (example) with the trained model
     y_pred = rf_tuned_nofs_nobl.predict(X_val)
+
+    print((y_pred + y_val))
 
     # if We have the labels with can also evaluate the prediction        
     acc1 = accuracy_score(y_val, y_pred)
@@ -143,12 +212,12 @@ if __name__ == '__main__':
     # y_pred1 = clf1.predict(X_val)
     # print(accuracy_score(y_pred1, y_val))
 
-    # # 随机森林
-    # clf2 = RandomForestClassifier(n_estimators=10, max_depth=None,
-    #     min_samples_split=2, random_state=0)
-    # clf2.fit(X_train, y_train)
-    # y_pred2 = clf2.predict(X_val)
-    # print(accuracy_score(y_pred2, y_val))
+    # 随机森林
+    clf2 = RandomForestClassifier(n_estimators=10, max_depth=None,
+        min_samples_split=2, random_state=0, max_features="sqrt",)
+    clf2.fit(X_train, y_train)
+    y_pred2 = clf2.predict(X_val)
+    print(accuracy_score(y_pred2, y_val))
 
     # # 极端决策树
     # clf3 = ExtraTreesClassifier(n_estimators=10, max_depth=None,

@@ -117,7 +117,10 @@ if __name__ == '__main__':
     train_data, val_data = random_split(train_dataset, [train_data_size, val_data_size])
 
     # 数据加载器
-    dataloaders = { 'train' : DataLoader(train_data, batch_size=8, shuffle=True), 'val' : DataLoader(val_data, batch_size=8, shuffle=False) }
+    dataloaders = { 
+        'train' : DataLoader(train_data, batch_size=16, shuffle=True), 
+        'val' : DataLoader(val_data, batch_size=16, shuffle=False)
+    }
     dataset_sizes = { 'train' : train_data_size, 'val' : val_data_size }
 
     # 模型
@@ -126,7 +129,8 @@ if __name__ == '__main__':
 
     # 损失函数
     # criterion = nn.CrossEntropyLoss()
-    criterion = nn.MSELoss()
+    # criterion = nn.MSELoss()
+    criterion = nn.BCELoss()
     # criterion = nn.BCEWithLogitsLoss()
 
     # 优化器

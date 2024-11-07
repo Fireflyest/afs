@@ -9,100 +9,10 @@ from PIL import Image
 
 from torch.utils.data import Dataset
 
-
-# 基础前48
-TOP_BASE_COLUMNS = ['Body mass index (BMI)',
-    'Frequency of walking for pleasure in last 4 weeks', 'Cheese intake',
-    'Year of birth', 'Age at recruitment', 'f.4080.0.0',
-    'Current tobacco smoking', 'Fresh fruit intake', 'Poultry intake',
-    'Getting up in morning', 'Duration of vigorous activity',
-    'Diastolic blood pressure, automated reading', 'Sleep duration',
-    'Number of unsuccessful stop-smoking attempts',
-    'Average weekly champagne plus white wine intake',
-    'Time spent outdoors in winter', 'Ever stopped smoking for 6+ months',
-    'Age started smoking in former smokers',
-    'Time spent watching television (TV)', 'Cereal intake',
-    'Past tobacco smoking', 'Age first had sexual intercourse', 'Calcium',
-    'Light smokers, at least 100 smokes in lifetime', 'Beef intake',
-    'Alcohol intake versus 10 years previously', 'Duration of walks',
-    'Usual walking pace', 'Able to confide',
-    'Time from waking to first cigarette', 'Former alcohol drinker',
-    'Hands-free device/speakerphone use with mobile phone in last 3 month',
-    'Vitamin E', 'Magnesium', 'Duration walking for pleasure',
-    'Frequency of stair climbing in last 4 weeks',
-    'Drive faster than motorway speed limit', 'Alcohol intake frequency.',
-    'Average weekly spirits intake', 'Plays computer games', 'Ever smoked',
-    'Processed meat intake', 'Salad / raw vegetable intake', 'Sex',
-    'Oily fish intake', 'Number of cigarettes previously smoked daily',
-    'Weekly usage of mobile phone in last 3 months',
-    'Sleeplessness / insomnia', 'Englyst dietary fibre',
-    'Exposure to tobacco smoke outside home',
-    'Number of diet questionnaires completed', 'Variation in diet',
-    'Time spend outdoors in summer', 'Salt added to food', 'Vitamin C',
-    'Snoring', 'Exposure to tobacco smoke at home', 'Iron',
-    'Frequency of solarium/sunlamp use', 'Length of mobile phone use',
-    'Nap during day']
-
-# 血液前48
-TOP_NMR_COLUMNS = ['Glucose',
-    'Cholesteryl Esters to Total Lipids in Very Small VLDL percentage',
-    'Cholesterol to Total Lipids in Very Small VLDL percentage',
-    'Phospholipids to Total Lipids in Large HDL percentage',
-    'Free Cholesterol in IDL', 'Cholesteryl Esters in IDL',
-    'Cholesterol to Total Lipids in Medium VLDL percentage',
-    'Cholesterol to Total Lipids in Large HDL percentage',
-    'Triglycerides to Total Lipids in Small VLDL percentage',
-    'Cholesteryl Esters to Total Lipids in Medium VLDL percentage',
-    'Phospholipids to Total Lipids in Medium VLDL percentage',
-    'Cholesterol in IDL',
-    'Triglycerides to Total Lipids in Very Large VLDL percentage',
-    'Cholesteryl Esters to Total Lipids in Large HDL percentage',
-    'Phospholipids to Total Lipids in Small VLDL percentage',
-    'Cholesteryl Esters to Total Lipids in IDL percentage',
-    '3-Hydroxybutyrate',
-    'Free Cholesterol to Total Lipids in Medium VLDL percentage',
-    'Free Cholesterol to Total Lipids in Small VLDL percentage',
-    'Triglycerides to Total Lipids in Medium VLDL percentage',
-    'Cholesterol to Total Lipids in IDL percentage',
-    'Cholesterol to Total Lipids in Small VLDL percentage',
-    'Cholesteryl Esters in Very Small VLDL',
-    'Free Cholesterol to Total Lipids in Large LDL percentage',
-    'Glycoprotein Acetyls',
-    'Cholesterol to Total Lipids in Large LDL percentage', 'Tyrosine',
-    'Glutamine', 'Creatinine', 'Acetoacetate',
-    'Cholesteryl Esters to Total Lipids in Very Large VLDL percentage',
-    'Total Concentration of Branched-Chain Amino Acids (Leucine + Isoleucine + Valine)',
-    'Albumin', 'Alanine',
-    'Triglycerides to Total Lipids in Medium LDL percentage',
-    'Cholesteryl Esters in Medium VLDL', 'Citrate',
-    'Cholesteryl Esters to Total Lipids in Chylomicrons and Extremely Large VLDL percentage',
-    'Cholesteryl Esters to Total Lipids in Large VLDL percentage',
-    'Triglycerides to Total Lipids in IDL percentage',
-    'Cholesterol in Very Small VLDL',
-    'Triglycerides to Total Lipids in Small LDL percentage', 'Valine',
-    'Phospholipids in IDL', 'Pyruvate',
-    'Free Cholesterol to Total Lipids in Very Small VLDL percentage',
-    'Cholesteryl Esters in Very Large HDL',
-    'Free Cholesterol to Total Lipids in Very Large HDL percentage',
-    'Triglycerides to Total Lipids in Very Small VLDL percentage',
-    'Phospholipids to Total Lipids in Medium LDL percentage',
-    'Monounsaturated Fatty Acids to Total Fatty Acids percentage',
-    'Lactate', 'Acetone', 'Leucine', 'Concentration of Large HDL Particles',
-    'Phosphatidylcholines',
-    'Cholesteryl Esters to Total Lipids in Large LDL percentage',
-    'Triglycerides in Large HDL', 'Glycine', 'Total Lipids in IDL',
-    'Cholesterol to Total Lipids in Very Large VLDL percentage',
-    'Isoleucine', 'Omega-3 Fatty Acids to Total Fatty Acids percentage',
-    'Cholesterol in Large HDL']
-
-# 用来训练的基础特征
-USE_BASE_COLUMNS = TOP_BASE_COLUMNS[:5]
-
-# 用来训练的血液特征
-USE_NMR_COLUMNS = TOP_NMR_COLUMNS[:5]
+import preprocess
 
 # 取多少个特征
-COLUMNS = len(USE_BASE_COLUMNS) + len(USE_NMR_COLUMNS)
+COLUMNS = preprocess.COLUMNS
 
 class DiabetesDataset(Dataset):
 
@@ -111,14 +21,16 @@ class DiabetesDataset(Dataset):
         super().__init__()
         self.transform = transform
         
+        COLUMNS = len(data.columns)
+
         # 这里拼接是为了方便删除某些行
         self.data = pd.concat([data, ground_true], axis=1)
-        # self.data.dropna(how='any', inplace=True, axis=0)
+        # self.data.dropna(how='all', inplace=True, axis=0, subset=['Glucose'])
 
         # 基础数据和血液数据
         self.ecgs = ecg_paths
         # self.X = torch.tensor(self.data[TOP_COLUMNS[:COLUMNS]].values, dtype=torch.float)
-        self.X = torch.tensor(self.data[USE_BASE_COLUMNS + USE_NMR_COLUMNS].values, dtype=torch.float)
+        self.X = torch.tensor(self.data.iloc[:, :COLUMNS].values, dtype=torch.float)
         print(f'self.X={self.X}')
 
 
@@ -127,10 +39,14 @@ class DiabetesDataset(Dataset):
         # self.y = torch.tensor(self.data.Complication.values, dtype=torch.float) # 不要第一列的确诊时间
         # self.y = torch.tensor(self.data[['T2D','Complication']].values, dtype=torch.float) # 不要第一列的确诊时间
         print(f'self.y={self.y}')
+
+        self.data.to_csv("./Temp.csv")
+
     
     def __getitem__(self, index):
         ecg = self.transform(Image.open(self.ecgs[index]).convert('RGB'))
         return (self.X[index], ecg), self.y[index]
+        # return (self.X[index], 0), self.y[index]
     
     def __len__(self):
         return len(self.X)
@@ -144,19 +60,52 @@ class ResidualFcBlock(nn.Module):
         super().__init__()            
         # self.fc1 = nn.Linear(dim, dim)
         self.fc1 = SelfAttention(dim, dim, dim)
-        self.dp = nn.Dropout(0.3)
-        self.ac = nn.ReLU()
+        self.dp = nn.Dropout(0.4)
+        self.ac = nn.Tanh()
         self.fc2 = nn.Linear(dim, dim)
     
-    def forward(self, x):
-        identity = x
-        out = self.fc1(x)
+    def forward(self, xq, xkv):
+        identity = xkv
+        out = self.fc1(xq, xkv)
         out = self.dp(out)
         out = self.ac(out)
         out = self.fc2(out)
         out += identity
         out = self.ac(out)
         return out
+
+# 总体网络
+class DiabetesPredictNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.basefc = ResidualFcBlock(COLUMNS)
+        self.resnet = ResNet(BasicBlock, [3, 4, 6, 3], include_top=False)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))  # output size = (1, 1)自适应
+        self.fc = nn.Linear(512 * BasicBlock.expansion, COLUMNS)
+        self.rfc1 = ResidualFcBlock(COLUMNS)
+        self.rfc2 = ResidualFcBlock(COLUMNS)
+        self.rfc3 = ResidualFcBlock(COLUMNS)
+        self.rfc4 = ResidualFcBlock(COLUMNS)
+        self.lfc = nn.Linear(COLUMNS, 1)
+        self.sigmoid = nn.Sigmoid()
+    
+    def forward(self, x, ecg):
+        x1 = self.basefc(x, x)
+
+        x2 = self.resnet(ecg)
+        x2 = self.avgpool(x2)
+        x2 = torch.flatten(x2, 1)
+        x2 = self.fc(x2)
+
+        # x3 = self.rfc1(x, x)
+        x3 = self.rfc1(x1, x2)
+        
+        x3 = self.rfc2(x3, x3)
+        x3 = self.rfc3(x3, x3)
+        x3 = self.rfc4(x3, x3)
+        x3 = self.lfc(x3)
+        return self.sigmoid(x3)
+
 
 class SelfAttention(nn.Module):
     def __init__(self, dim_q, dim_k, dim_v):
@@ -170,10 +119,10 @@ class SelfAttention(nn.Module):
         self.linear_v = nn.Linear(dim_q, dim_v, bias=False)
         self._norm_fact = 1 / math.sqrt(dim_k)
 
-    def forward(self, x):
-        q = self.linear_q(x)  # batch, n, dim_k
-        k = self.linear_k(x)  # batch, n, dim_k
-        v = self.linear_v(x)  # batch, n, dim_v
+    def forward(self, xq, xkv):
+        q = self.linear_q(xq)  # batch, n, dim_k
+        k = self.linear_k(xkv)  # batch, n, dim_k
+        v = self.linear_v(xkv)  # batch, n, dim_v
         # q*k的转置并除以开根号后的dim_k
         dist = torch.mm(q, k.T) * self._norm_fact
         # 归一化获得attention的相关系数
@@ -181,32 +130,6 @@ class SelfAttention(nn.Module):
         # attention系数和v相乘，获得最终的得分
         return torch.mm(dist, v)
 
-# 总体网络
-class DiabetesPredictNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.basefc = ResidualFcBlock(COLUMNS)
-        self.resnet = ResNet(BasicBlock, [3, 4, 6, 3], include_top=False)
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))  # output size = (1, 1)自适应
-        self.fc = nn.Linear(512 * BasicBlock.expansion, COLUMNS)
-        self.linear_relu_stack = nn.Sequential(
-            ResidualFcBlock(COLUMNS * 2),
-            ResidualFcBlock(COLUMNS * 2),
-            ResidualFcBlock(COLUMNS * 2),
-            ResidualFcBlock(COLUMNS * 2),
-            nn.Linear(COLUMNS * 2, 1),
-        )
-    
-    def forward(self, x, ecg):
-        x1 = self.basefc(x)
-
-        x2 = self.resnet(ecg)
-        x2 = self.avgpool(x2)
-        x2 = torch.flatten(x2, 1)
-        x2 = self.fc(x2)
-
-        x = torch.cat([x1, x2], dim=1)
-        return self.linear_relu_stack(x)
 
 class ChannelAttention(nn.Module): #通道注意力机制
     def __init__(self, in_planes, scaling=16):#scaling为缩放比例，

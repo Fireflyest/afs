@@ -73,7 +73,7 @@ if __name__ == '__main__':
     model.to(device)
 
     # 取一半因为内存不够
-    batch_size = int(len(dataset) / 2)
+    batch_size = int(len(dataset) / 8)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     test_model(model, dataloader, batch_size)
