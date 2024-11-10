@@ -34,9 +34,9 @@ class DiabetesDataset(Dataset):
         print(f'self.X={self.X}')
 
         # ground_true数据
-        self.y = torch.tensor(self.data.Complication.values, dtype=torch.float) # 不要第一列的确诊时间
-        # self.y = torch.tensor(self.data.Complication.values, dtype=torch.float) # 不要第一列的确诊时间
-        # self.y = torch.tensor(self.data[['T2D','Complication']].values, dtype=torch.float) # 不要第一列的确诊时间
+        self.y = torch.tensor(self.data.T2D.values, dtype=torch.float) # 糖尿病
+        # self.y = torch.tensor(self.data.Complication.values, dtype=torch.float) # 并发症
+        # self.y = torch.tensor(self.data[['T2D','Complication']].values, dtype=torch.float) # 两个一起
         print(f'self.y={self.y}')
 
         self.data.to_csv("./Temp.csv")
