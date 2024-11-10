@@ -180,57 +180,88 @@ if __name__ == '__main__':
 
 
 
-    # Create tuned model for RF
-    rf_tuned_nofs_nobl = RandomForestClassifier(max_depth = 5,  max_features = None, 
-                            criterion = 'entropy', n_estimators = 100, random_state=123)
+    # # Create tuned model for RF
+    # rf_tuned_nofs_nobl = RandomForestClassifier(max_depth = 5,  max_features = None, 
+    #                         criterion = 'entropy', n_estimators = 100, random_state=123)
 
-    # Train and evaluate the Random Forest Model
-    train_and_evaluate_model(rf_tuned_nofs_nobl, X_train, y_train, verbose=True)
+    # # Train and evaluate the Random Forest Model
+    # train_and_evaluate_model(rf_tuned_nofs_nobl, X_train, y_train, verbose=True)
 
-    # Do prediction (example) with the trained model
-    y_pred = rf_tuned_nofs_nobl.predict(X_val)
+    # # Do prediction (example) with the trained model
+    # y_pred = rf_tuned_nofs_nobl.predict(X_val)
 
-    print((y_pred + y_val))
+    # print((y_pred + y_val))
 
-    # if We have the labels with can also evaluate the prediction        
+    # # if We have the labels with can also evaluate the prediction        
+    # acc1 = accuracy_score(y_val, y_pred)
+    # auc1 = roc_auc_score(y_val, y_pred, average="macro")
+    # f11 = f1_score(y_val, y_pred, average="macro")
+    # prec1 = precision_score(y_val, y_pred, average="macro")
+    # recall1 = recall_score(y_val, y_pred, average="macro")
+    # print ('acc', acc1)
+    # print('f1', f11)
+    # print('recall1', recall1)
+    # print('auc1', auc1)
+
+
+
+    # 决策树
+    clf1 = DecisionTreeClassifier(max_depth=4, min_samples_split=2,
+    random_state=0, max_features='log2')
+    # clf1.fit(X_train, y_train)
+    train_and_evaluate_model(clf1, X_train, y_train, verbose=False)
+    y_pred1 = clf1.predict(X_val)
+    print(accuracy_score(y_pred1, y_val))
+
+    # 随机森林
+    clf2 = RandomForestClassifier(n_estimators=80, max_depth=None,
+        min_samples_split=2, random_state=0, max_features="sqrt",)
+    # clf2.fit(X_train, y_train)
+    train_and_evaluate_model(clf2, X_train, y_train, verbose=False)
+    y_pred2 = clf2.predict(X_val)
+    print(accuracy_score(y_pred2, y_val))
+
+    # 极端决策树
+    clf3 = ExtraTreesClassifier(n_estimators=80, max_depth=None,
+        min_samples_split=2, random_state=0)
+    # clf3.fit(X_train, y_train)
+    train_and_evaluate_model(clf3, X_train, y_train, verbose=False)
+    y_pred3 = clf3.predict(X_val)
+    print(accuracy_score(y_pred3, y_val))
+
+    # 集成训练，用多个决策树来集成一个大模型，这里用100个
+    clf4 = AdaBoostClassifier(n_estimators=100, algorithm="SAMME")
+    # clf4.fit(X_train, y_train)
+    train_and_evaluate_model(clf4, X_train, y_train, verbose=False)
+    y_pred4 = clf4.predict(X_val)
+    print(accuracy_score(y_pred4, y_val))
+
+    # 软投票
+    eclf = VotingClassifier(estimators=[('dt', clf1), ('rf', clf2), ('et', clf3), ('ab', clf4)],
+                            voting='soft', weights=[1, 1, 1, 1])
+    # eclf.fit(X_train, y_train)
+    train_and_evaluate_model(eclf, X_train, y_train, verbose=False)
+    y_pred5 = eclf.predict(X_val)
+    print(accuracy_score(y_pred5, y_val))
+
+    y_pred = y_pred1 + y_pred2 + y_pred3 + y_pred4 + y_pred5
+    print(y_pred/6 + y_val)
+    y_pred = np.where(y_pred >= 3, 1, 0)
     acc1 = accuracy_score(y_val, y_pred)
     auc1 = roc_auc_score(y_val, y_pred, average="macro")
     f11 = f1_score(y_val, y_pred, average="macro")
     prec1 = precision_score(y_val, y_pred, average="macro")
     recall1 = recall_score(y_val, y_pred, average="macro")
+    print('auc1', auc1)
     print ('acc', acc1)
     print('f1', f11)
+    print('prec1', prec1)
     print('recall1', recall1)
-    print('auc1', auc1)
 
 
 
-    # # 决策树
-    # clf1 = DecisionTreeClassifier(max_depth=None, min_samples_split=2,
-    # random_state=0)
-    # clf1.fit(X_train, y_train)
-    # y_pred1 = clf1.predict(X_val)
-    # print(accuracy_score(y_pred1, y_val))
-
-    # 随机森林
-    clf2 = RandomForestClassifier(n_estimators=10, max_depth=None,
-        min_samples_split=2, random_state=0, max_features="sqrt",)
-    clf2.fit(X_train, y_train)
-    y_pred2 = clf2.predict(X_val)
-    print(accuracy_score(y_pred2, y_val))
-
-    # # 极端决策树
-    # clf3 = ExtraTreesClassifier(n_estimators=10, max_depth=None,
-    #     min_samples_split=2, random_state=0)
-    # clf3.fit(X_train, y_train)
-    # y_pred3 = clf3.predict(X_val)
-    # print(accuracy_score(y_pred3, y_val))
 
 
-    # y_pred = y_pred1 + y_pred2 + y_pred3
-    # y_pred = np.where(y_pred >= 2, 1, 0)
-    # print(y_pred)
-    # print(accuracy_score(y_pred, y_val))
 
 
     # # 集成训练，用多个决策树来集成一个大模型，这里用100个
@@ -246,7 +277,7 @@ if __name__ == '__main__':
 
 
 
-    # 尝试更多机器学习的方法
+    # # 尝试更多机器学习的方法
     # clf1 = DecisionTreeClassifier(max_depth=4)
     # clf2 = KNeighborsClassifier(n_neighbors=7)
     # clf3 = SVC(kernel='rbf', probability=True)
@@ -262,10 +293,10 @@ if __name__ == '__main__':
     #     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
 
 
-    # clf1 = clf1.fit(X_train, y_train)
-    # clf2 = clf2.fit(X_train, y_train)
-    # clf3 = clf3.fit(X_train, y_train)
-    # eclf = eclf.fit(X_train, y_train)
+    # # clf1 = clf1.fit(X_train, y_train)
+    # # clf2 = clf2.fit(X_train, y_train)
+    # # clf3 = clf3.fit(X_train, y_train)
+    # # eclf = eclf.fit(X_train, y_train)
 
     # print(accuracy_score(clf1.predict(X_val), y_val))
     # print(accuracy_score(clf2.predict(X_val), y_val))

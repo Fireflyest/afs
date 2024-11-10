@@ -2,11 +2,15 @@ import preprocess
 import module
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, auc
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
+from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
+from sklearn.metrics import roc_auc_score,roc_curve,f1_score, precision_score, recall_score
 
 from torch.utils.data import DataLoader
 from torchvision import transforms
 import torch
 import time
+import numpy as np
 
 
 
@@ -22,13 +26,22 @@ def test_model(model, dataloader, batch_size):
             labels = labels.to(device)
             outputs = torch.squeeze(model(inputs, ecg_image))
             preds = torch.where(outputs > 0.5, 1.0, 0.0)
-            fpr, tpr, thresholds = roc_curve(labels.cpu().clone().detach().numpy(), outputs.cpu().clone().detach().numpy())
+            print(f'result={labels + preds/2}')
+
+            y_val = labels.cpu().clone().detach().numpy()
+            y_pred = outputs.cpu().clone().detach().numpy()
+            fpr, tpr, thresholds = roc_curve(y_val, y_pred)
             roc_auc = auc(fpr, tpr)
-            print(f'labels={labels}')
-            print(f'preds ={preds}')
+            y_pred = np.where(y_pred > 0.5, 1.0, 0.0)
+            acc = accuracy_score(y_val, y_pred)
+            f1 = f1_score(y_val, y_pred, average="macro")
+            prec = precision_score(y_val, y_pred, average="macro")
+            recall = recall_score(y_val, y_pred, average="macro")
             print(f'roc_auc={roc_auc}')
-            print(f'sum={torch.sum(preds == labels).item()}')
-            print(f'acc={torch.sum(preds == labels).item() / batch_size}')
+            print ('acc', acc)
+            print('f1', f1)
+            print('prec', prec)
+            print('recall', recall)
 
             plt.cla() 
             plt.plot(fpr, tpr, label='AUC')
@@ -39,12 +52,12 @@ def test_model(model, dataloader, batch_size):
             plt.legend(loc='lower right')
             plt.grid()
             plt.savefig('./out/auc.png')
-
+        
 
 if __name__ == '__main__':
 
     device = (
-        "cuda:3"
+        "cuda:1"
         if torch.cuda.is_available()
         else "mps"
         if torch.backends.mps.is_available()
@@ -73,7 +86,7 @@ if __name__ == '__main__':
     model.to(device)
 
     # 取一半因为内存不够
-    batch_size = int(len(dataset) / 8)
+    batch_size = int(len(dataset) / 2)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     test_model(model, dataloader, batch_size)

@@ -50,8 +50,7 @@ def train_model(model, dataloaders, dataset_sizes, loss_fc, optimizer, num_epoch
                     loss = loss_fc(outputs, labels)
                     if epoch == num_epochs - 1:
                         print('------------------------------------------')
-                        print(f'labels={labels}')
-                        print(f'preds ={preds}')
+                        print(f'result={labels + preds/10}')
                         print(f'outputs={outputs}')
                         print(f'sum={torch.sum(preds == labels).item()}')
                         fpr, tpr, thresholds = roc_curve(labels.cpu().numpy(), preds.cpu().numpy())
@@ -91,7 +90,7 @@ def train_model(model, dataloaders, dataset_sizes, loss_fc, optimizer, num_epoch
 if __name__ == '__main__':
 
     device = (
-        "cuda:3"
+        "cuda:1"
         if torch.cuda.is_available()
         else "mps"
         if torch.backends.mps.is_available()
@@ -112,14 +111,14 @@ if __name__ == '__main__':
 
     # 划分数据集
     train_dataset = module.DiabetesDataset(transform, total_data, ground_true_data, ecg_paths)
-    train_data_size = int(0.8 * len(train_dataset))
+    train_data_size = int(0.7 * len(train_dataset))
     val_data_size = len(train_dataset) - train_data_size
     train_data, val_data = random_split(train_dataset, [train_data_size, val_data_size])
 
     # 数据加载器
     dataloaders = { 
-        'train' : DataLoader(train_data, batch_size=16, shuffle=True), 
-        'val' : DataLoader(val_data, batch_size=16, shuffle=False)
+        'train' : DataLoader(train_data, batch_size=8, shuffle=True), 
+        'val' : DataLoader(val_data, batch_size=8, shuffle=False)
     }
     dataset_sizes = { 'train' : train_data_size, 'val' : val_data_size }
 
@@ -129,8 +128,8 @@ if __name__ == '__main__':
 
     # 损失函数
     # criterion = nn.CrossEntropyLoss()
-    # criterion = nn.MSELoss()
-    criterion = nn.BCELoss()
+    criterion = nn.MSELoss()
+    # criterion = nn.BCELoss()
     # criterion = nn.BCEWithLogitsLoss()
 
     # 优化器

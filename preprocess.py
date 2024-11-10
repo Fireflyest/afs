@@ -4,6 +4,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import pywt
+import math
 
 import ecgreader
 
@@ -11,7 +12,7 @@ from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import BayesianRidge
-from sklearn.preprocessing import QuantileTransformer, MaxAbsScaler, MinMaxScaler, StandardScaler, normalize
+from sklearn.preprocessing import QuantileTransformer, MaxAbsScaler, MinMaxScaler, StandardScaler, normalize, LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import KNNImputer
@@ -29,37 +30,39 @@ from sklearn.impute import KNNImputer
 #   'Free Cholesterol to Total Lipids in Small VLDL percentage']
 
 # 基础前
-TOP_BASE_COLUMNS = ['Body mass index (BMI)',
-    'Frequency of walking for pleasure in last 4 weeks', 'Cheese intake',
-    'Year of birth', 'Age at recruitment', 'f.4080.0.0',
-    'Current tobacco smoking', 'Fresh fruit intake', 'Poultry intake',
-    'Getting up in morning', 'Duration of vigorous activity',
-    'Diastolic blood pressure, automated reading', 'Sleep duration',
+TOP_BASE_COLUMNS = ['Body mass index (BMI)', 'Number of cigarettes previously smoked daily',
+    'Year of birth', 'Age started smoking in former smokers',
+    'Age at recruitment', 'Duration of vigorous activity', 'f.4080.0.0',
     'Number of unsuccessful stop-smoking attempts',
+    'Time spent watching television (TV)', 'Average weekly red wine intake',
     'Average weekly champagne plus white wine intake',
-    'Time spent outdoors in winter', 'Ever stopped smoking for 6+ months',
-    'Age started smoking in former smokers',
-    'Time spent watching television (TV)', 'Cereal intake',
-    'Past tobacco smoking', 'Age first had sexual intercourse', 'Calcium',
-    'Light smokers, at least 100 smokes in lifetime', 'Beef intake',
-    'Alcohol intake versus 10 years previously', 'Duration of walks',
-    'Usual walking pace', 'Able to confide',
-    'Time from waking to first cigarette', 'Former alcohol drinker',
-    'Hands-free device/speakerphone use with mobile phone in last 3 month',
-    'Vitamin E', 'Magnesium', 'Duration walking for pleasure',
-    'Frequency of stair climbing in last 4 weeks',
-    'Drive faster than motorway speed limit', 'Alcohol intake frequency.',
-    'Average weekly spirits intake', 'Plays computer games', 'Ever smoked',
-    'Processed meat intake', 'Salad / raw vegetable intake', 'Sex',
-    'Oily fish intake', 'Number of cigarettes previously smoked daily',
+    'Diastolic blood pressure, automated reading',
+    'Average weekly spirits intake', 'Age first had sexual intercourse',
+    'Number of diet questionnaires completed', 'Duration of walks',
+    'Time spent outdoors in winter', 'Time spend outdoors in summer',
+    'Lifetime number of sexual partners', 'Fresh fruit intake',
+    'Salad / raw vegetable intake', 'Cooked vegetable intake',
+    'Cereal intake', 'Sleep duration',
+    'Frequency of stair climbing in last 4 weeks', 'Usual walking pace',
+    'Able to confide', 'Dried fruit intake', 'Nap during day',
+    'Alcohol intake frequency.',
+    'Frequency of walking for pleasure in last 4 weeks',
+    'Drive faster than motorway speed limit', 'Cheese intake',
+    'Duration walking for pleasure', 'Processed meat intake', 'Beef intake',
+    'Plays computer games', 'Exposure to tobacco smoke outside home',
+    'Duration of heavy DIY', 'Oily fish intake',
     'Weekly usage of mobile phone in last 3 months',
-    'Sleeplessness / insomnia', 'Englyst dietary fibre',
-    'Exposure to tobacco smoke outside home',
-    'Number of diet questionnaires completed', 'Variation in diet',
-    'Time spend outdoors in summer', 'Salt added to food', 'Vitamin C',
-    'Snoring', 'Exposure to tobacco smoke at home', 'Iron',
-    'Frequency of solarium/sunlamp use', 'Length of mobile phone use',
-    'Nap during day']
+    'Length of mobile phone use', 'Getting up in morning',
+    'Alcohol intake versus 10 years previously', 'Past tobacco smoking',
+    'Poultry intake', 'Sex', 'Sleeplessness / insomnia',
+    'Variation in diet', 'Snoring', 'Daytime dozing / sleeping',
+    'Salt added to food', 'Exposure to tobacco smoke at home',
+    'Alcohol usually taken with meals',
+    'Hands-free device/speakerphone use with mobile phone in last 3 month',
+    'Frequency of solarium/sunlamp use',
+    'Light smokers, at least 100 smokes in lifetime',
+    'Smoking/smokers in household', 'Ever stopped smoking for 6+ months',
+    'Ever smoked', 'Current tobacco smoking']
 
 # 血液前
 TOP_NMR_COLUMNS = ['Glucose',
@@ -67,59 +70,72 @@ TOP_NMR_COLUMNS = ['Glucose',
     'Cholesterol to Total Lipids in Very Small VLDL percentage',
     'Phospholipids to Total Lipids in Large HDL percentage',
     'Free Cholesterol in IDL', 'Cholesteryl Esters in IDL',
-    'Cholesterol to Total Lipids in Medium VLDL percentage',
     'Cholesterol to Total Lipids in Large HDL percentage',
     'Triglycerides to Total Lipids in Small VLDL percentage',
     'Cholesteryl Esters to Total Lipids in Medium VLDL percentage',
-    'Phospholipids to Total Lipids in Medium VLDL percentage',
+    'Cholesterol to Total Lipids in Medium VLDL percentage',
     'Cholesterol in IDL',
+    'Phospholipids to Total Lipids in Medium VLDL percentage',
     'Triglycerides to Total Lipids in Very Large VLDL percentage',
-    'Cholesteryl Esters to Total Lipids in Large HDL percentage',
-    'Phospholipids to Total Lipids in Small VLDL percentage',
-    'Cholesteryl Esters to Total Lipids in IDL percentage',
     '3-Hydroxybutyrate',
+    'Phospholipids to Total Lipids in Small VLDL percentage',
     'Free Cholesterol to Total Lipids in Medium VLDL percentage',
-    'Free Cholesterol to Total Lipids in Small VLDL percentage',
-    'Triglycerides to Total Lipids in Medium VLDL percentage',
-    'Cholesterol to Total Lipids in IDL percentage',
-    'Cholesterol to Total Lipids in Small VLDL percentage',
-    'Cholesteryl Esters in Very Small VLDL',
+    'Cholesteryl Esters to Total Lipids in IDL percentage',
     'Free Cholesterol to Total Lipids in Large LDL percentage',
+    'Cholesterol to Total Lipids in IDL percentage',
+    'Triglycerides to Total Lipids in Medium VLDL percentage',
+    'Cholesteryl Esters in Very Small VLDL',
+    'Cholesteryl Esters to Total Lipids in Large HDL percentage',
     'Glycoprotein Acetyls',
-    'Cholesterol to Total Lipids in Large LDL percentage', 'Tyrosine',
-    'Glutamine', 'Creatinine', 'Acetoacetate',
-    'Cholesteryl Esters to Total Lipids in Very Large VLDL percentage',
     'Total Concentration of Branched-Chain Amino Acids (Leucine + Isoleucine + Valine)',
-    'Albumin', 'Alanine',
-    'Triglycerides to Total Lipids in Medium LDL percentage',
-    'Cholesteryl Esters in Medium VLDL', 'Citrate',
-    'Cholesteryl Esters to Total Lipids in Chylomicrons and Extremely Large VLDL percentage',
-    'Cholesteryl Esters to Total Lipids in Large VLDL percentage',
+    'Cholesterol to Total Lipids in Small VLDL percentage', 'Tyrosine',
+    'Cholesterol to Total Lipids in Large LDL percentage', 'Glutamine',
+    'Albumin', 'Acetoacetate',
+    'Cholesteryl Esters to Total Lipids in Very Large VLDL percentage',
+    'Creatinine',
+    'Free Cholesterol to Total Lipids in Small VLDL percentage',
     'Triglycerides to Total Lipids in IDL percentage',
+    'Triglycerides to Total Lipids in Medium LDL percentage', 'Alanine',
+    'Citrate', 'Cholesteryl Esters in Medium VLDL',
+    'Triglycerides to Total Lipids in Small LDL percentage', 'Pyruvate',
+    'Cholesteryl Esters to Total Lipids in Chylomicrons and Extremely Large VLDL percentage',
+    'Polyunsaturated Fatty Acids to Total Fatty Acids percentage',
+    'Phospholipids in IDL',
+    'Free Cholesterol to Total Lipids in Very Large HDL percentage',
     'Cholesterol in Very Small VLDL',
-    'Triglycerides to Total Lipids in Small LDL percentage', 'Valine',
-    'Phospholipids in IDL', 'Pyruvate',
+    'Cholesterol to Total Lipids in Very Large VLDL percentage',
+    'Cholesteryl Esters to Total Lipids in Large VLDL percentage', 'Valine',
+    'Glycine',
     'Free Cholesterol to Total Lipids in Very Small VLDL percentage',
     'Cholesteryl Esters in Very Large HDL',
-    'Free Cholesterol to Total Lipids in Very Large HDL percentage',
-    'Triglycerides to Total Lipids in Very Small VLDL percentage',
-    'Phospholipids to Total Lipids in Medium LDL percentage',
-    'Monounsaturated Fatty Acids to Total Fatty Acids percentage',
-    'Lactate', 'Acetone', 'Leucine', 'Concentration of Large HDL Particles',
-    'Phosphatidylcholines',
+    'Saturated Fatty Acids to Total Fatty Acids percentage',
+    'Concentration of Large HDL Particles',
+    'Average Diameter for LDL Particles', 'Lactate',
+    'Cholesterol in Large HDL',
+    'Phospholipids to Total Lipids in Medium LDL percentage', 'Leucine',
+    'Linoleic Acid to Total Fatty Acids percentage',
+    'Cholesterol to Total Lipids in Medium LDL percentage',
+    'Omega-3 Fatty Acids to Total Fatty Acids percentage', 'Histidine',
+    'Omega-6 Fatty Acids to Total Fatty Acids percentage',
     'Cholesteryl Esters to Total Lipids in Large LDL percentage',
-    'Triglycerides in Large HDL', 'Glycine', 'Total Lipids in IDL',
-    'Cholesterol to Total Lipids in Very Large VLDL percentage',
-    'Isoleucine', 'Omega-3 Fatty Acids to Total Fatty Acids percentage',
-    'Cholesterol in Large HDL']
+    'Phospholipids to Total Lipids in Very Small VLDL percentage',
+    'Cholesteryl Esters in Large HDL', 'Free Cholesterol in Large HDL',
+    'Phospholipids to Total Lipids in Medium HDL percentage',
+    'Cholesterol to Total Lipids in Chylomicrons and Extremely Large VLDL percentage',
+    'Monounsaturated Fatty Acids to Total Fatty Acids percentage',
+    'Acetone',
+    'Triglycerides to Total Lipids in Very Small VLDL percentage',
+    'Phospholipids to Total Lipids in Chylomicrons and Extremely Large VLDL percentage',
+    'Polyunsaturated Fatty Acids to Monounsaturated Fatty Acids ratio']
 
 # 用来训练的基础特征
-USE_BASE_COLUMNS = TOP_BASE_COLUMNS[:32]
+USE_BASE_COLUMNS = TOP_BASE_COLUMNS[:48]
 
 # 用来训练的血液特征
-USE_NMR_COLUMNS = TOP_NMR_COLUMNS[:32]
+USE_NMR_COLUMNS = TOP_NMR_COLUMNS[:48]
 
 COLUMNS = len(USE_BASE_COLUMNS) + len(USE_NMR_COLUMNS)
+# COLUMNS = 6 + 68 + 249
 
 
 # 心电数据用不同颜色画，部位接近的颜色比较接近
@@ -180,12 +196,19 @@ def drop_nan_column(data : pd.DataFrame, thresh=0.2):
     return data
 
 # 填充缺失值
-def fill_nan_data(data : pd.DataFrame, sample_posterior=True):
+def fill_nan_data(data : pd.DataFrame, value_types: dict, sample_posterior=True):
 
-    data.replace(-10.0, np.nan, inplace=True)
+    # data.replace(-10.0, np.nan, inplace=True)
+
+    # for column, value in data.items():
+    #     if value_types[column] == 'Categorical single':
+    #         value = value.to_frame()
+    #         imp = SimpleImputer(missing_values=np.nan, strategy='most_frequent')
+    #         data.loc[:,column] = imp.fit_transform(value)
 
     # https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html#sklearn.impute.IterativeImputer
-    imp = IterativeImputer(estimator=BayesianRidge(), n_nearest_features=None, imputation_order='ascending')
+    imp = IterativeImputer(estimator=BayesianRidge(), n_nearest_features=None, imputation_order='ascending',
+        max_iter=100)
     imp.set_output(transform='pandas')
     data = imp.fit_transform(data)
 
@@ -193,9 +216,12 @@ def fill_nan_data(data : pd.DataFrame, sample_posterior=True):
     # data = imp.fit_transform(data)
 
     # for column, value in data.items():
-    #     print(value_types[column])
-        # value = value.to_frame()
-        # data.loc[:,column] = scaler.transform(value)
+    #     cov = abs(value.var() / value.mean())
+    #     print(f'coefficient_of_variation={cov}')
+    #     if cov > 15:
+    #         value = value.to_frame()
+    #         le = LabelEncoder()
+    #         data.loc[:,column] = le.fit_transform(value)
 
     return data
 
@@ -259,11 +285,9 @@ def load_data(path):
     base_data.drop('f.eid', axis=1, inplace=True)
     base_data.rename(columns=field_names, inplace=True)
     base_data = base_data[USE_BASE_COLUMNS]
-    processed_base_data = pd.DataFrame(normalize_data(fill_nan_data(base_data)))
-    # processed_base_data = pd.DataFrame(fill_nan_data(drop_nan_column(base_data, thresh=0.8)))
+    processed_base_data = pd.DataFrame(normalize_data(fill_nan_data(base_data, value_types)))
+    # processed_base_data = pd.DataFrame(fill_nan_data(base_data, value_types))
     # processed_base_data = base_data
-    # processed_base_data.rename(columns={ i : base_data.columns.to_list()[i] for i in range(0, len(base_data.columns)) }, inplace=True)
-    # print(processed_base_data)
 
     # 血液数据
     nmr_data.drop('f.eid', axis=1, inplace=True)
@@ -271,13 +295,13 @@ def load_data(path):
     nmr_data = nmr_data[USE_NMR_COLUMNS]
     processed_nmr_data = pd.DataFrame(normalize_data(nmr_data))
     # processed_nmr_data = pd.DataFrame(fill_nan_data_knn(nmr_data))
-    processed_nmr_data = nmr_data
-    # processed_nmr_data.rename(columns={ i : nmr_data.columns.to_list()[i] for i in range(0, len(nmr_data.columns)) }, inplace=True)
-    # print(processed_nmr_data)
+    # processed_nmr_data = nmr_data
 
-    # total_data = processed_base_data
-    # total_data = nmr_data
+    # total_data_columns = len(processed_base_data.columns)
+    # total_data_columns = len(processed_nmr_data.columns)
     total_data_columns = len(processed_base_data.columns) + len(processed_nmr_data.columns)
+    # total_data = processed_base_data
+    # total_data = processed_nmr_data
     total_data = pd.concat([processed_base_data, processed_nmr_data], axis=1)
     total_data = pd.DataFrame(fill_nan_data_knn(total_data))
 
@@ -294,7 +318,7 @@ def load_data(path):
     y.to_csv(f'.{path}/y.csv')
 
     # eids， 特征名称， 基础数据和血液数据， ground_true
-    return eids, total_data.columns, X, y
+    return eids, X.columns, X, y
 
 # 从xml文件中读取心电数据
 def read_ecg(path):
@@ -351,7 +375,8 @@ def convert_all_ecg(path):
         # I, II, III, aVR, aVL, aVF, V1, V2, V3, V4, V5, V6
         for index, head in enumerate(HEADS):
             ax = fig.add_subplot(12, 1, index+1)
-            ax.plot(coeffs_ecg(ecg_data[head]), linewidth=0.3)
+            ax.plot(coeffs_ecg(ecg_data[head]), linewidth=0.5)
+            ax.plot(ecg_data[head], linewidth=0.5)
             ax.xaxis.set_visible(False)
             ax.yaxis.set_visible(False)
             ax.spines['top'].set_visible(False)
@@ -360,18 +385,18 @@ def convert_all_ecg(path):
             ax.spines['bottom'].set_visible(False)
         plt.subplots_adjust(left = 0, bottom = 0, right = 1, top = 1, wspace = 0, hspace = 0)
         plt.savefig(f'.{path}/ecg_temp/ecg_{eid}_processed.png', dpi=600)
-        # if index == 10 : break
+        if index == 1 : break
 
 if __name__ == '__main__':
 
-
-
-
+    convert_all_ecg('/dataset/train')
 
     # 以下代码是对特征的重要性进行排序
     eid, column, total_data, ground_true_data = load_data('/dataset/train')
     
     X_train, X_val, y_train, y_val = train_test_split(total_data, ground_true_data.T2D, test_size=0.2, random_state=42)
+
+    pass
 
     # https://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html#feature-importance-based-on-feature-permutation
     feature_names = column.to_list()
@@ -386,7 +411,7 @@ if __name__ == '__main__':
     print(f"Elapsed time to compute the importances: {elapsed_time:.3f} seconds")
 
     forest_importances = pd.Series(importances, index=feature_names)
-    forest_importances = forest_importances.sort_values(ascending=False)[0:5]
+    forest_importances = forest_importances.sort_values(ascending=False)[0:74]
     print(forest_importances)
 
     fig, ax = plt.subplots()

@@ -33,9 +33,8 @@ class DiabetesDataset(Dataset):
         self.X = torch.tensor(self.data.iloc[:, :COLUMNS].values, dtype=torch.float)
         print(f'self.X={self.X}')
 
-
         # ground_true数据
-        self.y = torch.tensor(self.data.T2D.values, dtype=torch.float) # 不要第一列的确诊时间
+        self.y = torch.tensor(self.data.Complication.values, dtype=torch.float) # 不要第一列的确诊时间
         # self.y = torch.tensor(self.data.Complication.values, dtype=torch.float) # 不要第一列的确诊时间
         # self.y = torch.tensor(self.data[['T2D','Complication']].values, dtype=torch.float) # 不要第一列的确诊时间
         print(f'self.y={self.y}')
@@ -60,8 +59,8 @@ class ResidualFcBlock(nn.Module):
         super().__init__()            
         # self.fc1 = nn.Linear(dim, dim)
         self.fc1 = SelfAttention(dim, dim, dim)
-        self.dp = nn.Dropout(0.4)
-        self.ac = nn.Tanh()
+        self.dp = nn.Dropout(0.5)
+        self.ac = nn.PReLU()
         self.fc2 = nn.Linear(dim, dim)
     
     def forward(self, xq, xkv):
@@ -82,12 +81,16 @@ class DiabetesPredictNet(nn.Module):
         self.resnet = ResNet(BasicBlock, [3, 4, 6, 3], include_top=False)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))  # output size = (1, 1)自适应
         self.fc = nn.Linear(512 * BasicBlock.expansion, COLUMNS)
-        self.rfc1 = ResidualFcBlock(COLUMNS)
-        self.rfc2 = ResidualFcBlock(COLUMNS)
-        self.rfc3 = ResidualFcBlock(COLUMNS)
-        self.rfc4 = ResidualFcBlock(COLUMNS)
-        self.lfc = nn.Linear(COLUMNS, 1)
-        self.sigmoid = nn.Sigmoid()
+        # self.rfc1 = ResidualFcBlock(COLUMNS)
+        # self.rfc2 = ResidualFcBlock(COLUMNS)
+        # self.rfc3 = ResidualFcBlock(COLUMNS)
+        # self.rfc4 = ResidualFcBlock(COLUMNS)
+        # self.lfc = nn.Linear(COLUMNS, 1)
+        self.rfc1 = ResidualFcBlock(COLUMNS*2)
+        self.rfc2 = ResidualFcBlock(COLUMNS*2)
+        self.rfc3 = ResidualFcBlock(COLUMNS*2)
+        self.rfc4 = ResidualFcBlock(COLUMNS*2)
+        self.lfc = nn.Linear(COLUMNS*2, 1)
     
     def forward(self, x, ecg):
         x1 = self.basefc(x, x)
@@ -98,13 +101,16 @@ class DiabetesPredictNet(nn.Module):
         x2 = self.fc(x2)
 
         # x3 = self.rfc1(x, x)
-        x3 = self.rfc1(x1, x2)
+        # x3 = self.rfc1(x1, x2)
+        # x3 = self.rfc1(x1+x2, x1+x2)
+        xc = torch.cat([x1, x2], dim=1)
+        x3 = self.rfc1(xc, xc)
         
         x3 = self.rfc2(x3, x3)
         x3 = self.rfc3(x3, x3)
         x3 = self.rfc4(x3, x3)
         x3 = self.lfc(x3)
-        return self.sigmoid(x3)
+        return x3
 
 
 class SelfAttention(nn.Module):
